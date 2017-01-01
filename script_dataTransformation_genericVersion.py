@@ -3,34 +3,7 @@ import numpy as np
 from IPython.display import display
 
 #define functions
-def createHistoricalPredictors(df, key_list, dim_list, attr2incement):
-    print(dim_list)
-    df_agg = df.groupby(key_list, as_index=0)[dim_list].agg('sum')
-    
-    df_n0 = df_agg.copy()
-    df_n1 = df_agg.copy()
-    df_n2 = df_agg.copy()
-    
-    df_n0.columns = key_list + [i + "_n0" for i in dim_list]
-    df_n1.columns = key_list + [i + "_n1" for i in dim_list]
-    df_n2.columns = key_list + [i + "_n2" for i in dim_list]
-
-    #step 5)
-    #incrementing years
-    df_n0[attr2incement] = df_n0[attr2incement] + 0 
-    df_n1[attr2incement] = df_n1[attr2incement] + 1 
-    df_n2[attr2incement] = df_n2[attr2incement] + 2
-
-    #step 6)
-    #merge
-    df_merged = df_n0.merge(df_n1, on=key_list, how='outer')
-    df_merged = df_merged.merge(df_n2, on=key_list, how='outer')
-
-    
-    df_final = df_merged
-    return(df_final)
-
-def createHistoricalPredictors_2(df, key_list, dim_list, attr2incement, yrs, remove_n0s):
+def createHistoricalPredictors(df, key_list, dim_list, attr2incement, yrs, remove_n0s):
     df_agg = df.groupby(key_list, as_index=0)[dim_list].agg('sum') 
     df_dict = {}
     
@@ -57,7 +30,6 @@ def createHistoricalPredictors_2(df, key_list, dim_list, attr2incement, yrs, rem
             if "_n0" in i: cols.remove(i)
     
     df_final = df_temp[key_list + list(cols)]
-    print("==============================")
     return(df_final)
 
 #create store/sku dataset
@@ -74,8 +46,6 @@ df = pd.DataFrame.from_items(items)
 
 #execute function and create predictors
 key_list = ['prd', 'yr']; dim_list = ['sales_summ', 'sales_yr']
-#df_agg = createHistoricalPredictors(df, key_list, dim_list, 'yr')
-#print(df_agg.head(3))
-df_ana = createHistoricalPredictors_2(df, key_list, dim_list, 'yr', 4, 1)
+df_ana = createHistoricalPredictors(df, key_list, dim_list, 'yr', 4, 1)
 print(df_ana.head(3))
 
