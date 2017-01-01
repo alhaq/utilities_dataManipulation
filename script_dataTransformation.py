@@ -2,12 +2,36 @@ import pandas as pd
 import numpy as np
 from IPython.display import display
 
-#parameters
-cols = ['sales_summ', 'sales_wint', 'sales_yr', 'sold_summ', 'sold_wint', 'sold_yr']
-cols = cols[0] #enter value between 0-5
+#define functions
+def createHistoricalPredictors(df, key_list, dim_list, attr2incement):
+    print(dim_list)
+    df_agg = df.groupby(key_list, as_index=0)[dim_list].agg('sum')
+    
+    df_n0 = df_agg.copy()
+    df_n1 = df_agg.copy()
+    df_n2 = df_agg.copy()
+    
+    df_n0.columns = key_list + [i + "_n0" for i in dim_list]
+    df_n1.columns = key_list + [i + "_n1" for i in dim_list]
+    df_n2.columns = key_list + [i + "_n2" for i in dim_list]
+
+    #step 5)
+    #incrementing years
+    df_n0[attr2incement] = df_n0[attr2incement] + 0 
+    df_n1[attr2incement] = df_n1[attr2incement] + 1 
+    df_n2[attr2incement] = df_n2[attr2incement] + 2
+
+    #step 6)
+    #merge
+    df_merged = df_n0.merge(df_n1, on=key_list, how='outer')
+    df_merged = df_merged.merge(df_n2, on=key_list, how='outer')
+
+    
+    df_final = df_merged
+    return(df_final)
 
 #create store/sku dataset
-items = [('prod', np.random.randint(1,10,100)),
+items = [('prd', np.random.randint(1,10,100)),
          ('node', np.random.randint(1000,1010,100)),
          ('yr', np.random.randint(2011,2016,100)),
          ('sales_summ', np.random.randint(10,200,100)),
@@ -17,48 +41,9 @@ items = [('prod', np.random.randint(1,10,100)),
          ('sold_wint', np.random.randint(0,2,100)),
          ('sold_yr', np.random.randint(0,2,100))]
 df = pd.DataFrame.from_items(items)
-#print(df.head(10))
 
-#step 2)
-#aggregate store/sku to sku level
-##df_prod = df.groupby(['prd','yr'], as_index=0).sum()
-##df_prod = pd.DataFrame(df_prod)
-##df_prod.drop('node',1, inplace=True) #drop unwanted column
-##df_prod.head(3)
-
-#step 2A)
-#aggregate store/sku to sku level
-df_prod = df.groupby(['prd','yr'], as_index=0)[cols].agg('sum')
-print(df_prod.head(3))
-
-#step 3)
-#creating multiple datasets to creating joins
-df_prod_n0 = df_prod.copy()
-df_prod_n1 = df_prod.copy()
-df_prod_n2 = df_prod.copy()
-
-#step 4)
-#renaming columns
-df_prod_n0.columns = ['prd', 'yr'] + [i + "_n0" for i in cols]
-df_prod_n1.columns = ['prd', 'yr'] + [i + "_n1" for i in cols]
-df_prod_n2.columns = ['prd', 'yr'] + [i + "_n2" for i in cols]
-
-#step 5)
-#incrementing years
-df_prod_n0.yr = df_prod_n0.yr + 0 
-df_prod_n1.yr = df_prod_n1.yr + 1 
-df_prod_n2.yr = df_prod_n2.yr + 2
-
-#step 6)
-#merge
-df_prod_merged = df_prod_n0.merge(df_prod_n1, on=['prd', 'yr'], how='outer')
-df_prod_merged = df_prod_merged.merge(df_prod_n2, on=['prd', 'yr'], how='outer')
-
-#step 7)
-#order columns in a clean way
-df_prod_merged = df_prod_merged[df_prod_merged.columns.sort_values()].head(3)
-df_prod_merged.head(3)
-
-
-
+#execute function and create predictors
+key_list = ['prd', 'yr']; dim_list = ['sales_summ', 'sales_yr']
+df_agg = createHistoricalPredictors(df, key_list, dim_list, 'yr')
+print(df_agg.head(3))
 
